@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>おうち調味料チェックリスト</title>
+<style>
+  :root {
+    --bg: #eaf1f6;
+    --fridge-body: #f6f9fb;
+    --fridge-shadow: #b9c8d3;
+    --shelf: #d4dde4;
+    --shelf-edge: #aab8c2;
+    --liquid-bg: #e8f4fb;
+    --powder-bg: #faf5ea;
+    --other-bg: #eef5ea;
+    --liquid-accent: #4ea8d6;
+    --powder-accent: #d6a55a;
+    --other-accent: #7eb069;
+    --have: #6dbf6d;
+    --have-bg: #eaf7ea;
+    --missing-bg: #ffffff;
+    --text: #2a3946;
+    --muted: #7a8a98;
+    --danger: #c66;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    background: radial-gradient(ellipse at top, #f3f7fa, var(--bg)) fixed;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  header.app-header { text-align: center; margin-bottom: 12px; }
+  header.app-header h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: 0.04em; }
+  header.app-header .sub { font-size: 12px; color: var(--muted); }
+
+  .toolbar { display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+  .search { flex: 1 1 240px; position: relative; }
+  .search input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #cdd6df;
+    border-radius: 999px;
+    background: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: box-shadow .15s;
+  }
+  .search input:focus {
+    box-shadow: 0 0 0 3px rgba(78,168,214,0.25);
+    border-color: var(--liquid-accent);
+  }
+  .search .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--muted); }
+  .filter-chips { display: flex; gap: 6px; }
+  .chip {
+    border: 1px solid #cdd6df; background: #fff;
+    border-radius: 999px; padding: 6px 12px;
+    font-size: 12px; cursor: pointer; color: var(--muted);
+    transition: all .15s;
+  }
+  .chip.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .stats { font-size: 12px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+  .stats b { color: var(--text); }
+
+  /* Fridge */
+  .fridge {
+    background: linear-gradient(180deg, var(--fridge-body), #eef3f7);
+    border: 1px solid #cdd6df;
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow:
+      0 10px 30px rgba(70,90,110,0.12),
+      inset 0 0 0 2px rgba(255,255,255,0.6);
+    position: relative;
+  }
+  .doors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "liquid powder" "other other";
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+  }
+  @media (max-width: 720px) {
+    .doors { grid-template-columns: 1fr; grid-template-areas: "liquid" "powder" "other"; }
+  }
+
+  .door {
+    background: var(--liquid-bg);
+    border-radius: 12px;
+    padding: 10px 10px 14px;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: inset 0 2px 6px rgba(255,255,255,0.7), inset 0 -2px 6px rgba(0,0,0,0.04);
+  }
+  .door.liquid { grid-area: liquid; }
+  .door.powder { background: var(--powder-bg); grid-area: powder; }
+  .door.other  { background: var(--other-bg);  grid-area: other; }
+
+  .door h2 {
+    display: flex; align-items: center; gap: 8px;
+    margin: 4px 4px 10px; font-size: 15px; letter-spacing: 0.05em;
+  }
+  .door h2 .badge {
+    margin-left: auto; font-size: 11px; font-weight: normal; color: var(--muted);
+    background: rgba(255,255,255,0.7);
+    padding: 2px 8px; border-radius: 999px;
+  }
+
+  .shelf {
+    background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2));
+    border-top: 2px solid var(--shelf-edge);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-radius: 4px;
+    padding: 10px 6px;
+    margin-bottom: 8px;
+    min-height: 56px;
+  }
+  .shelf:last-child { margin-bottom: 0; }
+
+  .items { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .item {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--missing-bg);
+    border: 1px solid #d6dde4;
+    border-radius: 10px;
+    padding: 6px 10px 6px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+    transition: all .12s;
+    position: relative;
+  }
+  .item:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  .item .emoji { font-size: 16px; line-height: 1; }
+  .item .name { font-weight: 500; }
+  .item.have { background: var(--have-bg); border-color: var(--have); color: #2c6e2c; }
+  .item.missing {
+    opacity: 0.65;
+    background: repeating-linear-gradient(135deg, #fff, #fff 6px, #f3f5f8 6px, #f3f5f8 12px);
+  }
+  .item .check {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    border: 1.5px solid #bcc6cf;
+    background: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #fff;
+  }
+  .item.have .check { background: var(--have); border-color: var(--have); }
+  .item.have .check::after { content: "✓"; }
+  .item .del { margin-left: 2px; color: #bcc6cf; font-size: 12px; padding: 0 2px; border-radius: 4px; }
+  .item .del:hover { color: var(--danger); background: rgba(0,0,0,0.04); }
+  .item.builtin .del { display: none; }
+
+  /* 共通の自由追記エリア */
+  .custom-add {
+    margin-top: 14px;
+    background: #fff;
+    border: 1px solid #cdd6df;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .custom-add h3 {
+    grid-column: 1 / -1;
+    margin: 0 0 4px;
+    font-size: 13px;
+    color: var(--text);
+    letter-spacing: 0.06em;
+  }
+  .custom-add select, .custom-add input {
+    padding: 8px 10px;
+    border: 1px solid #cdd6df;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+  }
+  .custom-add input:focus, .custom-add select:focus {
+    border-color: var(--liquid-accent);
+    box-shadow: 0 0 0 3px rgba(78,168,214,0.2);
+  }
+  .custom-add button {
+    border: none;
+    background: var(--text);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .custom-add button:hover { filter: brightness(1.1); }
+  @media (max-width: 520px) {
+    .custom-add { grid-template-columns: 1fr; }
+  }
+
+  .footer-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .footer-actions button {
+    background: #fff; border: 1px solid #cdd6df; color: var(--muted);
+    padding: 6px 14px; border-radius: 999px; font-size: 12px; cursor: pointer;
+  }
+  .footer-actions button:hover { color: var(--text); border-color: #aab8c2; }
+  .footer-actions .reopen { color: var(--liquid-accent); border-color: var(--liquid-accent); }
+
+  .empty-shelf { color: var(--muted); font-size: 12px; font-style: italic; padding: 4px 6px; }
+
+  /* ===== Intro (Closed Fridge) ===== */
+  .intro-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, #d9e5ee, #b9c8d3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    perspective: 1400px;
+    overflow: hidden;
+    transition: opacity .6s ease;
+  }
+  .intro-screen.hidden { display: none; }
+  .intro-screen.fade-out { opacity: 0; pointer-events: none; }
+  .intro-title {
+    font-size: 22px; color: #3a4a58;
+    letter-spacing: 0.08em; margin-bottom: 18px;
+    text-shadow: 0 1px 0 #fff;
+  }
+  .intro-sub {
+    margin-top: 18px; font-size: 13px; color: #5d6e7c; letter-spacing: 0.04em;
+  }
+  .intro-fridge {
+    position: relative;
+    width: min(320px, 78vw);
+    height: min(480px, 68vh);
+    transform-style: preserve-3d;
+  }
+  .fridge-interior {
+    position: absolute; inset: 0;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #f2f6f9 0%, #e0e8ef 100%);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.18), inset 0 4px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  .fridge-interior::before, .fridge-interior::after {
+    content: ""; position: absolute;
+    left: 8%; right: 8%;
+    height: 6px;
+    background: linear-gradient(180deg, #c2cdd6, #98a6b2);
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+  .fridge-interior::before { top: 30%; }
+  .fridge-interior::after  { top: 62%; }
+  .fridge-interior .peek {
+    position: absolute; bottom: 8%; left: 0; right: 0;
+    text-align: center; font-size: 11px;
+    color: #95a3ae; letter-spacing: 0.1em;
+  }
+  .fridge-door {
+    position: absolute; inset: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #fafcfd 0%, #e6edf2 50%, #f5f8fa 100%);
+    border: 1px solid #cdd6df;
+    box-shadow:
+      0 18px 40px rgba(60,80,100,0.25),
+      inset 0 2px 0 rgba(255,255,255,0.9),
+      inset 0 -2px 6px rgba(0,0,0,0.05);
+    transform-origin: left center;
+    transition: transform 1.2s cubic-bezier(.5,.05,.3,1);
+    backface-visibility: hidden;
+  }
+  .intro-screen.opening .fridge-door { transform: rotateY(-105deg); }
+
+  .door-logo {
+    position: absolute; top: 14%; left: 0; right: 0;
+    text-align: center; color: #5d6e7c; letter-spacing: 0.15em;
+  }
+  .door-logo .icon { font-size: 44px; display: block; margin-bottom: 8px; }
+  .door-logo .title { font-size: 16px; font-weight: 600; }
+  .door-logo .sub { font-size: 10px; color: #95a3ae; margin-top: 4px; letter-spacing: 0.2em; }
+
+  .door-handle {
+    position: absolute; right: 14px; top: 28%; bottom: 28%;
+    width: 14px; border-radius: 8px;
+    background: linear-gradient(90deg, #c8d2db, #e8edf1 50%, #aab8c2);
+    box-shadow: 2px 0 4px rgba(0,0,0,0.2), inset 1px 0 0 rgba(255,255,255,0.6);
+  }
+  .door-handle::before, .door-handle::after {
+    content: ""; position: absolute; left: -4px; right: -4px;
+    height: 6px; background: #98a6b2; border-radius: 2px;
+  }
+  .door-handle::before { top: -6px; }
+  .door-handle::after  { bottom: -6px; }
+
+  .check-btn {
+    position: absolute; right: 38px; top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(180deg, #ff8a5b, #ee6a3c);
+    color: #fff; border: none;
+    padding: 14px 22px; border-radius: 999px;
+    font-size: 15px; font-weight: 700; letter-spacing: 0.08em;
+    cursor: pointer;
+    box-shadow:
+      0 6px 16px rgba(238,106,60,0.4),
+      0 2px 4px rgba(0,0,0,0.15),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    white-space: nowrap;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  .check-btn:hover { filter: brightness(1.05); }
+  .check-btn:active { transform: translateY(-50%) scale(0.96); }
+  .check-btn::after {
+    content: ""; position: absolute;
+    right: -10px; top: 50%; transform: translateY(-50%);
+    border: 6px solid transparent; border-left-color: #ee6a3c;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 6px 16px rgba(238,106,60,0.4), 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4); }
+    50%      { box-shadow: 0 6px 24px rgba(238,106,60,0.7), 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4); }
+  }
+  .intro-screen.opening .check-btn { opacity: 0; transition: opacity .3s; }
+
+  /* ===== Mobile (phone) ===== */
+  @media (max-width: 600px) {
+    body { padding: 12px 10px; }
+    header.app-header { margin-bottom: 8px; }
+    header.app-header h1 { font-size: 18px; }
+    header.app-header .sub { font-size: 11px; }
+
+    .toolbar { gap: 6px; margin: 10px 0; }
+    .search { flex-basis: 100%; }
+    .search input { padding: 9px 12px 9px 34px; font-size: 14px; }
+    .filter-chips { flex: 1; }
+    .chip { padding: 6px 10px; font-size: 11px; flex: 1; text-align: center; }
+    .stats { font-size: 11px; }
+
+    .fridge { padding: 10px; border-radius: 14px; }
+    .doors { gap: 10px; }
+    .door { padding: 8px 8px 12px; }
+    .door h2 { font-size: 14px; margin: 4px 2px 8px; }
+    .door h2 .badge { font-size: 10px; padding: 2px 7px; }
+    .shelf { padding: 8px 4px; margin-bottom: 6px; }
+    .items { gap: 5px; }
+
+    /* タップ領域を大きく */
+    .item { padding: 8px 10px 8px 8px; font-size: 13px; gap: 5px; }
+    .item .emoji { font-size: 17px; }
+    .item .check { width: 16px; height: 16px; }
+
+    .custom-add { padding: 10px 12px; gap: 6px; margin-top: 12px; }
+    .custom-add h3 { font-size: 12px; }
+    .custom-add select, .custom-add input, .custom-add button {
+      padding: 10px 12px; font-size: 14px;
+    }
+
+    .footer-actions { gap: 6px; margin-top: 12px; }
+    .footer-actions button { padding: 8px 12px; font-size: 11px; }
+
+    /* イントロ */
+    .intro-title { font-size: 18px; margin-bottom: 14px; letter-spacing: 0.05em; }
+    .intro-sub { font-size: 11px; margin-top: 14px; padding: 0 16px; text-align: center; }
+    .intro-fridge {
+      width: min(280px, 80vw);
+      height: min(420px, 62vh);
+    }
+    .door-logo { top: 16%; }
+    .door-logo .icon { font-size: 38px; }
+    .check-btn {
+      padding: 11px 16px;
+      font-size: 13px;
+      right: 30px;
+      letter-spacing: 0.04em;
+    }
+    .door-handle { right: 10px; width: 11px; top: 30%; bottom: 30%; }
+  }
+
+  /* 超狭幅（〜360px） */
+  @media (max-width: 360px) {
+    .check-btn { padding: 10px 12px; font-size: 12px; right: 26px; }
+    .door h2 { font-size: 13px; }
+    .item { font-size: 12px; }
+  }
+
+  /* 横向き（高さが狭い）対策 */
+  @media (max-height: 560px) and (orientation: landscape) {
+    .intro-fridge {
+      width: min(260px, 38vw);
+      height: min(82vh, 380px);
+    }
+    .intro-title { font-size: 16px; margin-bottom: 8px; }
+    .intro-sub { margin-top: 10px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Intro: Closed Fridge ===== -->
+<div class="intro-screen" id="introScreen">
+  <div class="intro-title">🧊 おうち調味料チェック</div>
+  <div class="intro-fridge">
+    <div class="fridge-interior">
+      <div class="peek">…なかをチェック…</div>
+    </div>
+    <div class="fridge-door">
+      <div class="door-logo">
+        <span class="icon">🧊</span>
+      </div>
+      <div class="door-handle"></div>
+    </div>
+    <button class="check-btn" id="openFridgeBtn">チェックする</button>
+  </div>
+  <div class="intro-sub">取っ手のボタンを押して冷蔵庫を開けましょう</div>
+</div>
+
+<div class="wrap">
+  <header class="app-header">
+    <h1>🧊 おうち調味料チェックリスト</h1>
+    <div class="sub">家にあるものに ✓ をつけて、買い忘れ・買い重複を防ぐ</div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search">
+      <span class="icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="調味料を検索 (例: 醤油、片栗粉)" />
+    </div>
+    <div class="filter-chips" role="tablist">
+      <button class="chip active" data-filter="all">すべて</button>
+      <button class="chip" data-filter="have">あり</button>
+      <button class="chip" data-filter="missing">なし</button>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="fridge">
+    <div class="doors">
+      <section class="door liquid" data-category="liquid">
+        <h2>💧 液体・ペースト系 <span class="badge" id="liquidBadge"></span></h2>
+        <div id="liquidShelves"></div>
+      </section>
+
+      <section class="door powder" data-category="powder">
+        <h2>🌾 粉・乾物系 <span class="badge" id="powderBadge"></span></h2>
+        <div id="powderShelves"></div>
+      </section>
+
+      <section class="door other" data-category="other">
+        <h2>📦 その他 <span class="badge" id="otherBadge"></span></h2>
+        <div id="otherShelves"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 共通自由追記エリア -->
+  <div class="custom-add">
+    <h3>✏️ 自由追記</h3>
+    <select id="customCategory">
+      <option value="liquid">💧 液体・ペースト系</option>
+      <option value="powder">🌾 粉・乾物系</option>
+      <option value="other">📦 その他</option>
+    </select>
+    <input type="text" id="customName" placeholder="例: スイートチリソース、タピオカ粉、ピクルス" />
+    <button id="customAddBtn">＋追加</button>
+  </div>
+
+  <div class="footer-actions">
+    <button class="reopen" id="reopenBtn">🚪 冷蔵庫を閉じる</button>
+    <button id="exportBtn">📤 エクスポート(JSON)</button>
+    <button id="importBtn">📥 インポート</button>
+    <button id="resetBtn">🔄 初期化</button>
+    <input type="file" id="importFile" accept="application/json" hidden />
+  </div>
+</div>
+
+<script>
+// ===== 既定の調味料データ =====
+const DEFAULT_ITEMS = {
+  liquid: [
+    { shelf: "基本調味料", items: [
+      { name: "醤油",         emoji: "🍶" },
+      { name: "濃口醤油",     emoji: "🍶" },
+      { name: "薄口醤油",     emoji: "🍶" },
+      { name: "みりん",       emoji: "🍶" },
+      { name: "料理酒",       emoji: "🍶" },
+      { name: "酢",           emoji: "🍶" },
+      { name: "米酢",         emoji: "🍶" },
+      { name: "穀物酢",       emoji: "🍶" },
+      { name: "白だし",       emoji: "🍶" },
+      { name: "麺つゆ",       emoji: "🍶" },
+      { name: "ポン酢",       emoji: "🍶" },
+    ]},
+    { shelf: "油", items: [
+      { name: "サラダ油",     emoji: "🫗" },
+      { name: "ごま油",       emoji: "🫗" },
+      { name: "オリーブオイル", emoji: "🫒" },
+      { name: "米油",         emoji: "🫗" },
+      { name: "なたね油",     emoji: "🫗" },
+      { name: "ラー油",       emoji: "🌶️" },
+    ]},
+    { shelf: "ソース類", items: [
+      { name: "ウスターソース", emoji: "🍶" },
+      { name: "中濃ソース",   emoji: "🍶" },
+      { name: "とんかつソース", emoji: "🍶" },
+      { name: "ケチャップ",   emoji: "🍅" },
+      { name: "マヨネーズ",   emoji: "🥚" },
+      { name: "オイスターソース", emoji: "🍶" },
+      { name: "焼肉のたれ",   emoji: "🍶" },
+    ]},
+    { shelf: "ペースト・味噌", items: [
+      { name: "味噌",         emoji: "🟤" },
+      { name: "豆板醤",       emoji: "🌶️" },
+      { name: "甜麺醤",       emoji: "🟤" },
+      { name: "コチュジャン", emoji: "🌶️" },
+      { name: "練りからし",   emoji: "💛" },
+      { name: "練りわさび",   emoji: "💚" },
+      { name: "練り生姜",     emoji: "🟡" },
+      { name: "練りにんにく", emoji: "🧄" },
+    ]},
+    { shelf: "甘味・その他", items: [
+      { name: "はちみつ",     emoji: "🍯" },
+      { name: "メープルシロップ", emoji: "🍁" },
+      { name: "レモン汁",     emoji: "🍋" },
+      { name: "ナンプラー",   emoji: "🍶" },
+      { name: "バルサミコ酢", emoji: "🍶" },
+      { name: "豆乳",         emoji: "🥛" },
+    ]},
+  ],
+  powder: [
+    { shelf: "粉もの", items: [
+      { name: "薄力粉",       emoji: "🌾" },
+      { name: "中力粉",       emoji: "🌾" },
+      { name: "強力粉",       emoji: "🌾" },
+      { name: "片栗粉",       emoji: "🥔" },
+      { name: "米粉",         emoji: "🌾" },
+      { name: "パン粉",       emoji: "🍞" },
+      { name: "コーンスターチ", emoji: "🌽" },
+      { name: "天ぷら粉",     emoji: "🌾" },
+      { name: "お好み焼き粉", emoji: "🌾" },
+    ]},
+    { shelf: "塩・糖", items: [
+      { name: "塩",           emoji: "🧂" },
+      { name: "粗塩",         emoji: "🧂" },
+      { name: "上白糖",       emoji: "🍚" },
+      { name: "グラニュー糖", emoji: "⚪" },
+      { name: "きび砂糖",     emoji: "🟤" },
+      { name: "三温糖",       emoji: "🟤" },
+      { name: "黒糖",         emoji: "⬛" },
+    ]},
+    { shelf: "スパイス", items: [
+      { name: "黒胡椒",       emoji: "⚫" },
+      { name: "白胡椒",       emoji: "⚪" },
+      { name: "一味唐辛子",   emoji: "🌶️" },
+      { name: "七味唐辛子",   emoji: "🌶️" },
+      { name: "山椒",         emoji: "🟢" },
+      { name: "カレー粉",     emoji: "🍛" },
+      { name: "ガラムマサラ", emoji: "🟠" },
+      { name: "クミン",       emoji: "🟤" },
+      { name: "パプリカパウダー", emoji: "🟥" },
+      { name: "シナモン",     emoji: "🟤" },
+      { name: "ナツメグ",     emoji: "🟤" },
+      { name: "ローリエ",     emoji: "🌿" },
+      { name: "バジル(乾燥)", emoji: "🌿" },
+      { name: "オレガノ",     emoji: "🌿" },
+    ]},
+    { shelf: "だし・素", items: [
+      { name: "だしの素",     emoji: "🐟" },
+      { name: "鶏ガラスープの素", emoji: "🍗" },
+      { name: "コンソメ",     emoji: "🥩" },
+      { name: "中華だし",     emoji: "🥡" },
+      { name: "和風だし",     emoji: "🐟" },
+    ]},
+    { shelf: "製菓・その他", items: [
+      { name: "ベーキングパウダー", emoji: "🧁" },
+      { name: "重曹",         emoji: "⚪" },
+      { name: "ドライイースト", emoji: "🍞" },
+      { name: "ココアパウダー", emoji: "🍫" },
+      { name: "抹茶",         emoji: "🍵" },
+      { name: "きな粉",       emoji: "🟡" },
+      { name: "ゼラチン",     emoji: "🟡" },
+      { name: "粉寒天",       emoji: "⚪" },
+    ]},
+  ],
+  other: [
+    { shelf: "乾物・だし", items: [
+      { name: "鰹節",         emoji: "🐟" },
+      { name: "出汁パック",   emoji: "🍵" },
+      { name: "海苔",         emoji: "🟩" },
+      { name: "焼き海苔",     emoji: "🟩" },
+      { name: "乾燥わかめ",   emoji: "🌿" },
+      { name: "干し椎茸",     emoji: "🍄" },
+      { name: "ひじき",       emoji: "⬛" },
+      { name: "切り干し大根", emoji: "🥕" },
+      { name: "麩",           emoji: "⚪" },
+      { name: "高野豆腐",     emoji: "🟫" },
+      { name: "春雨",         emoji: "🍜" },
+    ]},
+    { shelf: "ごま・薬味", items: [
+      { name: "白ごま",       emoji: "⚪" },
+      { name: "黒ごま",       emoji: "⚫" },
+      { name: "すりごま",     emoji: "🟤" },
+      { name: "ふりかけ",     emoji: "🍙" },
+      { name: "青のり",       emoji: "🟢" },
+      { name: "桜えび",       emoji: "🦐" },
+    ]},
+    { shelf: "香味野菜", items: [
+      { name: "にんにく",     emoji: "🧄" },
+      { name: "生姜",         emoji: "🫚" },
+      { name: "長ねぎ",       emoji: "🌿" },
+      { name: "鷹の爪",       emoji: "🌶️" },
+    ]},
+    { shelf: "その他", items: [
+      { name: "バター",       emoji: "🧈" },
+      { name: "ジャム",       emoji: "🍓" },
+      { name: "ピーナッツバター", emoji: "🥜" },
+      { name: "粉チーズ",     emoji: "🧀" },
+    ]},
+  ]
+};
+
+const CATEGORY_LABELS = {
+  liquid: "液体・ペースト系",
+  powder: "粉・乾物系",
+  other:  "その他",
+};
+const CATEGORY_EMOJI = {
+  liquid: "🍶",
+  powder: "📦",
+  other:  "📦",
+};
+
+// ===== 状態管理 =====
+const STORAGE_KEY = "seasoning-list-v2";
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      // 後方互換：v1にotherがない場合は補完
+      s.custom = s.custom || {};
+      s.custom.liquid = s.custom.liquid || [];
+      s.custom.powder = s.custom.powder || [];
+      s.custom.other  = s.custom.other  || [];
+      s.have = s.have || {};
+      return s;
+    }
+  } catch (e) {}
+  return { have: {}, custom: { liquid: [], powder: [], other: [] } };
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+let state = loadState();
+
+function keyOf(category, name) { return category + "::" + name; }
+
+// ===== レンダリング =====
+const SHELF_CONTAINERS = {
+  liquid: document.getElementById("liquidShelves"),
+  powder: document.getElementById("powderShelves"),
+  other:  document.getElementById("otherShelves"),
+};
+const BADGES = {
+  liquid: document.getElementById("liquidBadge"),
+  powder: document.getElementById("powderBadge"),
+  other:  document.getElementById("otherBadge"),
+};
+const searchInput = document.getElementById("searchInput");
+const statsEl = document.getElementById("stats");
+
+let currentFilter = "all";
+
+function render() {
+  const q = searchInput.value.trim().toLowerCase();
+  ["liquid", "powder", "other"].forEach(cat => renderCategory(cat, SHELF_CONTAINERS[cat], q));
+  updateStats();
+}
+
+function renderCategory(category, container, q) {
+  container.innerHTML = "";
+
+  const shelves = DEFAULT_ITEMS[category].map(s => ({
+    shelf: s.shelf,
+    items: s.items.map(it => ({ ...it, builtin: true }))
+  }));
+  if (state.custom[category].length > 0) {
+    shelves.push({
+      shelf: "自由追記",
+      items: state.custom[category].map(name => ({
+        name, emoji: CATEGORY_EMOJI[category], builtin: false
+      }))
+    });
+  }
+
+  let visibleCount = 0;
+  shelves.forEach(shelfObj => {
+    const filtered = shelfObj.items.filter(it => {
+      const matchQ = !q || it.name.toLowerCase().includes(q);
+      const have = !!state.have[keyOf(category, it.name)];
+      const matchFilter =
+        currentFilter === "all" ||
+        (currentFilter === "have" && have) ||
+        (currentFilter === "missing" && !have);
+      return matchQ && matchFilter;
+    });
+
+    if (filtered.length === 0) return;
+
+    const shelfEl = document.createElement("div");
+    shelfEl.className = "shelf";
+
+    const label = document.createElement("div");
+    label.style.cssText = "font-size:11px; color:var(--muted); margin: 0 4px 6px; letter-spacing:.04em;";
+    label.textContent = shelfObj.shelf;
+    shelfEl.appendChild(label);
+
+    const itemsEl = document.createElement("div");
+    itemsEl.className = "items";
+    filtered.forEach(it => {
+      const k = keyOf(category, it.name);
+      const have = !!state.have[k];
+      const el = document.createElement("div");
+      el.className = "item " + (have ? "have" : "missing") + (it.builtin ? " builtin" : "");
+      el.innerHTML = `
+        <span class="check"></span>
+        <span class="emoji">${it.emoji}</span>
+        <span class="name"></span>
+        <span class="del" title="削除">✕</span>
+      `;
+      el.querySelector(".name").textContent = it.name;
+      el.addEventListener("click", (ev) => {
+        if (ev.target.classList.contains("del")) {
+          if (!it.builtin) {
+            state.custom[category] = state.custom[category].filter(n => n !== it.name);
+            delete state.have[k];
+            saveState();
+            render();
+          }
+          return;
+        }
+        state.have[k] = !state.have[k];
+        if (!state.have[k]) delete state.have[k];
+        saveState();
+        render();
+      });
+      itemsEl.appendChild(el);
+      visibleCount++;
+    });
+
+    shelfEl.appendChild(itemsEl);
+    container.appendChild(shelfEl);
+  });
+
+  if (visibleCount === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-shelf";
+    empty.textContent = q ? `「${q}」に一致する項目はありません` : "表示できる項目がありません";
+    container.appendChild(empty);
+  }
+
+  const total = countTotal(category);
+  const have = countHave(category);
+  BADGES[category].textContent = `${have} / ${total}`;
+}
+
+function countTotal(category) {
+  let n = 0;
+  DEFAULT_ITEMS[category].forEach(s => n += s.items.length);
+  n += state.custom[category].length;
+  return n;
+}
+function countHave(category) {
+  let n = 0;
+  DEFAULT_ITEMS[category].forEach(s => s.items.forEach(it => {
+    if (state.have[keyOf(category, it.name)]) n++;
+  }));
+  state.custom[category].forEach(name => {
+    if (state.have[keyOf(category, name)]) n++;
+  });
+  return n;
+}
+
+function updateStats() {
+  let total = 0, have = 0;
+  ["liquid", "powder", "other"].forEach(cat => {
+    total += countTotal(cat);
+    have  += countHave(cat);
+  });
+  const missing = total - have;
+  statsEl.innerHTML = `所持 <b>${have}</b> / 全 <b>${total}</b>　不足 <b style="color:var(--danger)">${missing}</b>`;
+}
+
+// ===== イベント =====
+searchInput.addEventListener("input", render);
+
+document.querySelectorAll(".chip").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentFilter = btn.dataset.filter;
+    render();
+  });
+});
+
+// 共通追加フォーム
+const customCategory = document.getElementById("customCategory");
+const customName = document.getElementById("customName");
+function doCustomAdd() {
+  const category = customCategory.value;
+  const name = customName.value.trim();
+  if (!name) return;
+  const existsBuiltin = DEFAULT_ITEMS[category].some(s => s.items.some(it => it.name === name));
+  const existsCustom = state.custom[category].includes(name);
+  if (existsBuiltin || existsCustom) {
+    customName.value = "";
+    searchInput.value = name;
+    render();
+    return;
+  }
+  state.custom[category].push(name);
+  state.have[keyOf(category, name)] = true;
+  saveState();
+  customName.value = "";
+  render();
+}
+document.getElementById("customAddBtn").addEventListener("click", doCustomAdd);
+customName.addEventListener("keydown", (e) => { if (e.key === "Enter") doCustomAdd(); });
+
+// リセット・エクスポート・インポート
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm("チェック状態と自由追記を全てリセットしますか？")) {
+    state = { have: {}, custom: { liquid: [], powder: [], other: [] } };
+    saveState();
+    render();
+  }
+});
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const d = new Date();
+  const ts = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  a.download = `seasoning-list-${ts}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (data && data.have && data.custom) {
+        data.custom.liquid = data.custom.liquid || [];
+        data.custom.powder = data.custom.powder || [];
+        data.custom.other  = data.custom.other  || [];
+        state = data;
+        saveState();
+        render();
+      } else { alert("不正なファイル形式です"); }
+    } catch { alert("読み込みに失敗しました"); }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+// ===== 冷蔵庫オープン演出 =====
+const introScreen = document.getElementById("introScreen");
+document.getElementById("openFridgeBtn").addEventListener("click", () => {
+  introScreen.classList.add("opening");
+  setTimeout(() => {
+    introScreen.classList.add("fade-out");
+    setTimeout(() => { introScreen.classList.add("hidden"); }, 600);
+  }, 700);
+});
+document.getElementById("reopenBtn").addEventListener("click", () => {
+  introScreen.classList.remove("hidden", "fade-out", "opening");
+});
+
+render();
+</script>
+</body>
+</html>
