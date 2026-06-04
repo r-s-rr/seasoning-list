@@ -23,6 +23,7 @@
     --text: #2a3946;
     --muted: #7a8a98;
     --danger: #c66;
+    --accent: #ee6a3c;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -38,6 +39,55 @@
   header.app-header { text-align: center; margin-bottom: 12px; }
   header.app-header h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: 0.04em; }
   header.app-header .sub { font-size: 12px; color: var(--muted); }
+
+  /* ユーザー番号バッジ */
+  .user-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 6px 0 8px;
+    flex-wrap: wrap;
+  }
+  .user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #cdd6df;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .user-badge .num {
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.06em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .sync-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #bcc6cf;
+    transition: background .2s;
+  }
+  .sync-dot.loading, .sync-dot.saving { background: #f0a040; animation: blink 1s infinite; }
+  .sync-dot.synced { background: var(--have); }
+  .sync-dot.error  { background: var(--danger); }
+  @keyframes blink { 50% { opacity: .35; } }
+  .user-actions { display: inline-flex; gap: 6px; }
+  .user-actions button {
+    background: #fff;
+    border: 1px solid #cdd6df;
+    color: var(--muted);
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .user-actions button:hover { color: var(--text); border-color: #aab8c2; }
 
   .toolbar { display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
   .search { flex: 1 1 240px; position: relative; }
@@ -215,6 +265,93 @@
 
   .empty-shelf { color: var(--muted); font-size: 12px; font-style: italic; padding: 4px 6px; }
 
+  /* ===== ユーザー番号登録画面 ===== */
+  .register-screen {
+    position: fixed; inset: 0;
+    background: linear-gradient(160deg, #fff3ec 0%, #ffe2d4 60%, #fad0bb 100%);
+    z-index: 1001;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    transition: opacity .4s ease;
+  }
+  .register-screen.hidden { display: none; }
+  .register-screen.fading { opacity: 0; pointer-events: none; }
+  .register-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 20px 50px rgba(180,90,40,0.25);
+    text-align: center;
+  }
+  .register-icon { font-size: 48px; line-height: 1; margin-bottom: 8px; }
+  .register-card h2 { font-size: 18px; margin: 0 0 6px; letter-spacing: 0.04em; }
+  .register-desc { font-size: 12px; color: var(--muted); margin: 0 0 18px; line-height: 1.6; }
+  .register-step { display: flex; flex-direction: column; gap: 10px; }
+  .register-step[hidden] { display: none; }
+  .register-btn {
+    border: none;
+    padding: 13px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #f1f4f7;
+    color: var(--text);
+    transition: all .15s;
+  }
+  .register-btn:hover { background: #e6ecf1; }
+  .register-btn.primary {
+    background: linear-gradient(180deg, #ff8a5b, #ee6a3c);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(238,106,60,0.3);
+  }
+  .register-btn.primary:hover { filter: brightness(1.05); }
+  .register-btn.ghost {
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 8px;
+  }
+  .register-btn.ghost:hover { color: var(--text); background: transparent; }
+
+  .number-input {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid #e0e6eb;
+    border-radius: 12px;
+    font-size: 26px;
+    text-align: center;
+    letter-spacing: 0.4em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    outline: none;
+  }
+  .number-input:focus { border-color: var(--accent); }
+  .number-input.error { border-color: var(--danger); }
+
+  .new-number-display {
+    font-size: 36px;
+    letter-spacing: 0.3em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    color: var(--accent);
+    background: #fff5ef;
+    border: 2px dashed #ffb088;
+    border-radius: 12px;
+    padding: 18px 8px;
+    margin: 8px 0 12px;
+    text-align: center;
+  }
+
+  .register-error {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 4px;
+    min-height: 16px;
+  }
+
   /* ===== Intro (Closed Fridge) ===== */
   .intro-screen {
     position: fixed;
@@ -287,8 +424,6 @@
     text-align: center; color: #5d6e7c; letter-spacing: 0.15em;
   }
   .door-logo .icon { font-size: 44px; display: block; margin-bottom: 8px; }
-  .door-logo .title { font-size: 16px; font-weight: 600; }
-  .door-logo .sub { font-size: 10px; color: #95a3ae; margin-top: 4px; letter-spacing: 0.2em; }
 
   .door-handle {
     position: absolute; right: 14px; top: 28%; bottom: 28%;
@@ -331,7 +466,7 @@
   }
   .intro-screen.opening .check-btn { opacity: 0; transition: opacity .3s; }
 
-  /* ===== Mobile (phone) ===== */
+  /* ===== Mobile ===== */
   @media (max-width: 600px) {
     body { padding: 12px 10px; }
     header.app-header { margin-bottom: 8px; }
@@ -353,7 +488,6 @@
     .shelf { padding: 8px 4px; margin-bottom: 6px; }
     .items { gap: 5px; }
 
-    /* タップ領域を大きく */
     .item { padding: 8px 10px 8px 8px; font-size: 13px; gap: 5px; }
     .item .emoji { font-size: 17px; }
     .item .check { width: 16px; height: 16px; }
@@ -367,37 +501,29 @@
     .footer-actions { gap: 6px; margin-top: 12px; }
     .footer-actions button { padding: 8px 12px; font-size: 11px; }
 
-    /* イントロ */
     .intro-title { font-size: 18px; margin-bottom: 14px; letter-spacing: 0.05em; }
     .intro-sub { font-size: 11px; margin-top: 14px; padding: 0 16px; text-align: center; }
-    .intro-fridge {
-      width: min(280px, 80vw);
-      height: min(420px, 62vh);
-    }
+    .intro-fridge { width: min(280px, 80vw); height: min(420px, 62vh); }
     .door-logo { top: 16%; }
     .door-logo .icon { font-size: 38px; }
-    .check-btn {
-      padding: 11px 16px;
-      font-size: 13px;
-      right: 30px;
-      letter-spacing: 0.04em;
-    }
+    .check-btn { padding: 11px 16px; font-size: 13px; right: 30px; letter-spacing: 0.04em; }
     .door-handle { right: 10px; width: 11px; top: 30%; bottom: 30%; }
+
+    .register-card { padding: 22px 18px; }
+    .register-icon { font-size: 42px; }
+    .register-card h2 { font-size: 17px; }
+    .number-input { font-size: 24px; padding: 14px; }
+    .new-number-display { font-size: 30px; padding: 14px 8px; }
   }
 
-  /* 超狭幅（〜360px） */
   @media (max-width: 360px) {
     .check-btn { padding: 10px 12px; font-size: 12px; right: 26px; }
     .door h2 { font-size: 13px; }
     .item { font-size: 12px; }
   }
 
-  /* 横向き（高さが狭い）対策 */
   @media (max-height: 560px) and (orientation: landscape) {
-    .intro-fridge {
-      width: min(260px, 38vw);
-      height: min(82vh, 380px);
-    }
+    .intro-fridge { width: min(260px, 38vw); height: min(82vh, 380px); }
     .intro-title { font-size: 16px; margin-bottom: 8px; }
     .intro-sub { margin-top: 10px; font-size: 11px; }
   }
@@ -405,8 +531,39 @@
 </head>
 <body>
 
+<!-- ===== ユーザー番号登録 ===== -->
+<div class="register-screen hidden" id="registerScreen">
+  <div class="register-card">
+    <div class="register-icon">🏠</div>
+    <h2>家族で共有する番号</h2>
+    <div class="register-desc">同じ番号を入力した人と<br>調味料リストを共有できます</div>
+
+    <div class="register-step" id="regStep1">
+      <button class="register-btn primary" id="newNumberBtn">＋ 新しい番号を作る</button>
+      <button class="register-btn" id="enterNumberBtn">既存の番号を入力</button>
+    </div>
+
+    <div class="register-step" id="regStep2" hidden>
+      <div class="register-desc">家族から聞いた6桁の番号を入力</div>
+      <input type="text" id="userNumberInput" inputmode="numeric" maxlength="6" placeholder="123456" class="number-input" autocomplete="off" />
+      <div class="register-error" id="enterError"></div>
+      <button class="register-btn primary" id="submitNumberBtn">この番号で始める</button>
+      <button class="register-btn ghost" id="backToStep1A">← 戻る</button>
+    </div>
+
+    <div class="register-step" id="regStep3" hidden>
+      <div class="register-desc">あなたの番号はこちらです</div>
+      <div class="new-number-display" id="newNumberDisplay">------</div>
+      <div class="register-desc">📝 メモして、家族と共有してください</div>
+      <button class="register-btn primary" id="confirmNewBtn">この番号で始める</button>
+      <button class="register-btn ghost" id="regenBtn">🎲 別の番号にする</button>
+      <button class="register-btn ghost" id="backToStep1B">← 戻る</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Intro: Closed Fridge ===== -->
-<div class="intro-screen" id="introScreen">
+<div class="intro-screen hidden" id="introScreen">
   <div class="intro-title">🧊 おうち調味料チェック</div>
   <div class="intro-fridge">
     <div class="fridge-interior">
@@ -428,6 +585,18 @@
     <h1>🧊 おうち調味料チェックリスト</h1>
     <div class="sub">家にあるものに ✓ をつけて、買い忘れ・買い重複を防ぐ</div>
   </header>
+
+  <div class="user-bar">
+    <div class="user-badge">
+      <span class="sync-dot" id="syncDot" title="同期状態"></span>
+      <span>番号</span>
+      <span class="num" id="userNumberDisplay">------</span>
+    </div>
+    <div class="user-actions">
+      <button id="refreshBtn" title="他のスマホでの変更を取り込み">🔄 更新</button>
+      <button id="switchUserBtn">⇄ 番号を切替</button>
+    </div>
+  </div>
 
   <div class="toolbar">
     <div class="search">
@@ -461,7 +630,6 @@
     </div>
   </div>
 
-  <!-- 共通自由追記エリア -->
   <div class="custom-add">
     <h3>✏️ 自由追記</h3>
     <select id="customCategory">
@@ -477,190 +645,294 @@
     <button class="reopen" id="reopenBtn">🚪 冷蔵庫を閉じる</button>
     <button id="exportBtn">📤 エクスポート(JSON)</button>
     <button id="importBtn">📥 インポート</button>
-    <button id="resetBtn">🔄 初期化</button>
+    <button id="resetBtn">🔄 リスト初期化</button>
     <input type="file" id="importFile" accept="application/json" hidden />
   </div>
 </div>
 
 <script>
+// ===== Pantry Cloud 設定 =====
+const PANTRY_ID = '3c4e1c3d-5641-4516-8ee6-1ea2d9df992f';
+const pantryUrl = (num) => `https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/user-${num}`;
+
+const USER_KEY = 'seasoning-user-number';
+const STORAGE_KEY = 'seasoning-list-v2';
+
 // ===== 既定の調味料データ =====
 const DEFAULT_ITEMS = {
   liquid: [
     { shelf: "基本調味料", items: [
-      { name: "醤油",         emoji: "🍶" },
-      { name: "濃口醤油",     emoji: "🍶" },
-      { name: "薄口醤油",     emoji: "🍶" },
-      { name: "みりん",       emoji: "🍶" },
-      { name: "料理酒",       emoji: "🍶" },
-      { name: "酢",           emoji: "🍶" },
-      { name: "米酢",         emoji: "🍶" },
-      { name: "穀物酢",       emoji: "🍶" },
-      { name: "白だし",       emoji: "🍶" },
-      { name: "麺つゆ",       emoji: "🍶" },
-      { name: "ポン酢",       emoji: "🍶" },
+      { name: "醤油", emoji: "🍶" }, { name: "濃口醤油", emoji: "🍶" }, { name: "薄口醤油", emoji: "🍶" },
+      { name: "みりん", emoji: "🍶" }, { name: "料理酒", emoji: "🍶" }, { name: "酢", emoji: "🍶" },
+      { name: "米酢", emoji: "🍶" }, { name: "穀物酢", emoji: "🍶" }, { name: "白だし", emoji: "🍶" },
+      { name: "麺つゆ", emoji: "🍶" }, { name: "ポン酢", emoji: "🍶" },
     ]},
     { shelf: "油", items: [
-      { name: "サラダ油",     emoji: "🫗" },
-      { name: "ごま油",       emoji: "🫗" },
-      { name: "オリーブオイル", emoji: "🫒" },
-      { name: "米油",         emoji: "🫗" },
-      { name: "なたね油",     emoji: "🫗" },
-      { name: "ラー油",       emoji: "🌶️" },
+      { name: "サラダ油", emoji: "🫗" }, { name: "ごま油", emoji: "🫗" },
+      { name: "オリーブオイル", emoji: "🫒" }, { name: "米油", emoji: "🫗" },
+      { name: "なたね油", emoji: "🫗" }, { name: "ラー油", emoji: "🌶️" },
     ]},
     { shelf: "ソース類", items: [
-      { name: "ウスターソース", emoji: "🍶" },
-      { name: "中濃ソース",   emoji: "🍶" },
-      { name: "とんかつソース", emoji: "🍶" },
-      { name: "ケチャップ",   emoji: "🍅" },
-      { name: "マヨネーズ",   emoji: "🥚" },
-      { name: "オイスターソース", emoji: "🍶" },
-      { name: "焼肉のたれ",   emoji: "🍶" },
+      { name: "ウスターソース", emoji: "🍶" }, { name: "中濃ソース", emoji: "🍶" },
+      { name: "とんかつソース", emoji: "🍶" }, { name: "ケチャップ", emoji: "🍅" },
+      { name: "マヨネーズ", emoji: "🥚" }, { name: "オイスターソース", emoji: "🍶" },
+      { name: "焼肉のたれ", emoji: "🍶" },
     ]},
     { shelf: "ペースト・味噌", items: [
-      { name: "味噌",         emoji: "🟤" },
-      { name: "豆板醤",       emoji: "🌶️" },
-      { name: "甜麺醤",       emoji: "🟤" },
-      { name: "コチュジャン", emoji: "🌶️" },
-      { name: "練りからし",   emoji: "💛" },
-      { name: "練りわさび",   emoji: "💚" },
-      { name: "練り生姜",     emoji: "🟡" },
-      { name: "練りにんにく", emoji: "🧄" },
+      { name: "味噌", emoji: "🟤" }, { name: "豆板醤", emoji: "🌶️" },
+      { name: "甜麺醤", emoji: "🟤" }, { name: "コチュジャン", emoji: "🌶️" },
+      { name: "練りからし", emoji: "💛" }, { name: "練りわさび", emoji: "💚" },
+      { name: "練り生姜", emoji: "🟡" }, { name: "練りにんにく", emoji: "🧄" },
     ]},
     { shelf: "甘味・その他", items: [
-      { name: "はちみつ",     emoji: "🍯" },
-      { name: "メープルシロップ", emoji: "🍁" },
-      { name: "レモン汁",     emoji: "🍋" },
-      { name: "ナンプラー",   emoji: "🍶" },
-      { name: "バルサミコ酢", emoji: "🍶" },
-      { name: "豆乳",         emoji: "🥛" },
+      { name: "はちみつ", emoji: "🍯" }, { name: "メープルシロップ", emoji: "🍁" },
+      { name: "レモン汁", emoji: "🍋" }, { name: "ナンプラー", emoji: "🍶" },
+      { name: "バルサミコ酢", emoji: "🍶" }, { name: "豆乳", emoji: "🥛" },
     ]},
   ],
   powder: [
     { shelf: "粉もの", items: [
-      { name: "薄力粉",       emoji: "🌾" },
-      { name: "中力粉",       emoji: "🌾" },
-      { name: "強力粉",       emoji: "🌾" },
-      { name: "片栗粉",       emoji: "🥔" },
-      { name: "米粉",         emoji: "🌾" },
-      { name: "パン粉",       emoji: "🍞" },
-      { name: "コーンスターチ", emoji: "🌽" },
-      { name: "天ぷら粉",     emoji: "🌾" },
-      { name: "お好み焼き粉", emoji: "🌾" },
+      { name: "薄力粉", emoji: "🌾" }, { name: "中力粉", emoji: "🌾" }, { name: "強力粉", emoji: "🌾" },
+      { name: "片栗粉", emoji: "🥔" }, { name: "米粉", emoji: "🌾" }, { name: "パン粉", emoji: "🍞" },
+      { name: "コーンスターチ", emoji: "🌽" }, { name: "天ぷら粉", emoji: "🌾" }, { name: "お好み焼き粉", emoji: "🌾" },
     ]},
     { shelf: "塩・糖", items: [
-      { name: "塩",           emoji: "🧂" },
-      { name: "粗塩",         emoji: "🧂" },
-      { name: "上白糖",       emoji: "🍚" },
-      { name: "グラニュー糖", emoji: "⚪" },
-      { name: "きび砂糖",     emoji: "🟤" },
-      { name: "三温糖",       emoji: "🟤" },
-      { name: "黒糖",         emoji: "⬛" },
+      { name: "塩", emoji: "🧂" }, { name: "粗塩", emoji: "🧂" }, { name: "上白糖", emoji: "🍚" },
+      { name: "グラニュー糖", emoji: "⚪" }, { name: "きび砂糖", emoji: "🟤" },
+      { name: "三温糖", emoji: "🟤" }, { name: "黒糖", emoji: "⬛" },
     ]},
     { shelf: "スパイス", items: [
-      { name: "黒胡椒",       emoji: "⚫" },
-      { name: "白胡椒",       emoji: "⚪" },
-      { name: "一味唐辛子",   emoji: "🌶️" },
-      { name: "七味唐辛子",   emoji: "🌶️" },
-      { name: "山椒",         emoji: "🟢" },
-      { name: "カレー粉",     emoji: "🍛" },
-      { name: "ガラムマサラ", emoji: "🟠" },
-      { name: "クミン",       emoji: "🟤" },
-      { name: "パプリカパウダー", emoji: "🟥" },
-      { name: "シナモン",     emoji: "🟤" },
-      { name: "ナツメグ",     emoji: "🟤" },
-      { name: "ローリエ",     emoji: "🌿" },
-      { name: "バジル(乾燥)", emoji: "🌿" },
-      { name: "オレガノ",     emoji: "🌿" },
+      { name: "黒胡椒", emoji: "⚫" }, { name: "白胡椒", emoji: "⚪" },
+      { name: "一味唐辛子", emoji: "🌶️" }, { name: "七味唐辛子", emoji: "🌶️" },
+      { name: "山椒", emoji: "🟢" }, { name: "カレー粉", emoji: "🍛" },
+      { name: "ガラムマサラ", emoji: "🟠" }, { name: "クミン", emoji: "🟤" },
+      { name: "パプリカパウダー", emoji: "🟥" }, { name: "シナモン", emoji: "🟤" },
+      { name: "ナツメグ", emoji: "🟤" }, { name: "ローリエ", emoji: "🌿" },
+      { name: "バジル(乾燥)", emoji: "🌿" }, { name: "オレガノ", emoji: "🌿" },
     ]},
     { shelf: "だし・素", items: [
-      { name: "だしの素",     emoji: "🐟" },
-      { name: "鶏ガラスープの素", emoji: "🍗" },
-      { name: "コンソメ",     emoji: "🥩" },
-      { name: "中華だし",     emoji: "🥡" },
-      { name: "和風だし",     emoji: "🐟" },
+      { name: "だしの素", emoji: "🐟" }, { name: "鶏ガラスープの素", emoji: "🍗" },
+      { name: "コンソメ", emoji: "🥩" }, { name: "中華だし", emoji: "🥡" },
+      { name: "和風だし", emoji: "🐟" },
     ]},
     { shelf: "製菓・その他", items: [
-      { name: "ベーキングパウダー", emoji: "🧁" },
-      { name: "重曹",         emoji: "⚪" },
-      { name: "ドライイースト", emoji: "🍞" },
-      { name: "ココアパウダー", emoji: "🍫" },
-      { name: "抹茶",         emoji: "🍵" },
-      { name: "きな粉",       emoji: "🟡" },
-      { name: "ゼラチン",     emoji: "🟡" },
-      { name: "粉寒天",       emoji: "⚪" },
+      { name: "ベーキングパウダー", emoji: "🧁" }, { name: "重曹", emoji: "⚪" },
+      { name: "ドライイースト", emoji: "🍞" }, { name: "ココアパウダー", emoji: "🍫" },
+      { name: "抹茶", emoji: "🍵" }, { name: "きな粉", emoji: "🟡" },
+      { name: "ゼラチン", emoji: "🟡" }, { name: "粉寒天", emoji: "⚪" },
     ]},
   ],
   other: [
     { shelf: "乾物・だし", items: [
-      { name: "鰹節",         emoji: "🐟" },
-      { name: "出汁パック",   emoji: "🍵" },
-      { name: "海苔",         emoji: "🟩" },
-      { name: "焼き海苔",     emoji: "🟩" },
-      { name: "乾燥わかめ",   emoji: "🌿" },
-      { name: "干し椎茸",     emoji: "🍄" },
-      { name: "ひじき",       emoji: "⬛" },
-      { name: "切り干し大根", emoji: "🥕" },
-      { name: "麩",           emoji: "⚪" },
-      { name: "高野豆腐",     emoji: "🟫" },
-      { name: "春雨",         emoji: "🍜" },
+      { name: "鰹節", emoji: "🐟" }, { name: "出汁パック", emoji: "🍵" },
+      { name: "海苔", emoji: "🟩" }, { name: "焼き海苔", emoji: "🟩" },
+      { name: "乾燥わかめ", emoji: "🌿" }, { name: "干し椎茸", emoji: "🍄" },
+      { name: "ひじき", emoji: "⬛" }, { name: "切り干し大根", emoji: "🥕" },
+      { name: "麩", emoji: "⚪" }, { name: "高野豆腐", emoji: "🟫" },
+      { name: "春雨", emoji: "🍜" },
     ]},
     { shelf: "ごま・薬味", items: [
-      { name: "白ごま",       emoji: "⚪" },
-      { name: "黒ごま",       emoji: "⚫" },
-      { name: "すりごま",     emoji: "🟤" },
-      { name: "ふりかけ",     emoji: "🍙" },
-      { name: "青のり",       emoji: "🟢" },
-      { name: "桜えび",       emoji: "🦐" },
+      { name: "白ごま", emoji: "⚪" }, { name: "黒ごま", emoji: "⚫" },
+      { name: "すりごま", emoji: "🟤" }, { name: "ふりかけ", emoji: "🍙" },
+      { name: "青のり", emoji: "🟢" }, { name: "桜えび", emoji: "🦐" },
     ]},
     { shelf: "香味野菜", items: [
-      { name: "にんにく",     emoji: "🧄" },
-      { name: "生姜",         emoji: "🫚" },
-      { name: "長ねぎ",       emoji: "🌿" },
-      { name: "鷹の爪",       emoji: "🌶️" },
+      { name: "にんにく", emoji: "🧄" }, { name: "生姜", emoji: "🫚" },
+      { name: "長ねぎ", emoji: "🌿" }, { name: "鷹の爪", emoji: "🌶️" },
     ]},
     { shelf: "その他", items: [
-      { name: "バター",       emoji: "🧈" },
-      { name: "ジャム",       emoji: "🍓" },
-      { name: "ピーナッツバター", emoji: "🥜" },
-      { name: "粉チーズ",     emoji: "🧀" },
+      { name: "バター", emoji: "🧈" }, { name: "ジャム", emoji: "🍓" },
+      { name: "ピーナッツバター", emoji: "🥜" }, { name: "粉チーズ", emoji: "🧀" },
     ]},
   ]
 };
 
-const CATEGORY_LABELS = {
-  liquid: "液体・ペースト系",
-  powder: "粉・乾物系",
-  other:  "その他",
-};
-const CATEGORY_EMOJI = {
-  liquid: "🍶",
-  powder: "📦",
-  other:  "📦",
-};
+const CATEGORY_EMOJI = { liquid: "🍶", powder: "📦", other: "📦" };
 
-// ===== 状態管理 =====
-const STORAGE_KEY = "seasoning-list-v2";
+// ===== 状態 =====
+let userNumber = null;
+let state = emptyState();
+let saveTimer = null;
+let isLoadingFromRemote = false;
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const s = JSON.parse(raw);
-      // 後方互換：v1にotherがない場合は補完
-      s.custom = s.custom || {};
-      s.custom.liquid = s.custom.liquid || [];
-      s.custom.powder = s.custom.powder || [];
-      s.custom.other  = s.custom.other  || [];
-      s.have = s.have || {};
-      return s;
-    }
-  } catch (e) {}
+function emptyState() {
   return { have: {}, custom: { liquid: [], powder: [], other: [] } };
 }
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-let state = loadState();
+function normalizeState(s) {
+  s = s || {};
+  s.have = s.have || {};
+  s.custom = s.custom || {};
+  s.custom.liquid = s.custom.liquid || [];
+  s.custom.powder = s.custom.powder || [];
+  s.custom.other  = s.custom.other  || [];
+  return s;
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return normalizeState(JSON.parse(raw));
+  } catch (e) {}
+  return emptyState();
+}
+function saveLocal() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
 function keyOf(category, name) { return category + "::" + name; }
+
+// ===== 同期 =====
+const syncDot = document.getElementById("syncDot");
+function setSyncStatus(status, msg) {
+  syncDot.className = "sync-dot " + status;
+  const labels = {
+    idle: "未同期", loading: "読み込み中…", saving: "保存中…",
+    synced: "同期済み", error: msg || "同期エラー"
+  };
+  syncDot.title = labels[status] || status;
+}
+
+async function loadFromPantry() {
+  if (!userNumber) return;
+  setSyncStatus("loading");
+  isLoadingFromRemote = true;
+  try {
+    const res = await fetch(pantryUrl(userNumber));
+    if (res.ok) {
+      const data = await res.json();
+      state = normalizeState(data);
+      saveLocal();
+      render();
+      setSyncStatus("synced");
+    } else if (res.status === 400 || res.status === 404) {
+      // 未作成 → 現在の(ローカル)状態でバスケット作成
+      await saveToPantry(true);
+    } else {
+      setSyncStatus("error", "読込失敗 " + res.status);
+    }
+  } catch (e) {
+    setSyncStatus("error", "オフライン?");
+    console.error(e);
+  } finally {
+    isLoadingFromRemote = false;
+  }
+}
+
+function scheduleSave() {
+  if (isLoadingFromRemote) return;
+  if (!userNumber) return;
+  clearTimeout(saveTimer);
+  setSyncStatus("saving");
+  saveTimer = setTimeout(() => saveToPantry(false), 700);
+}
+
+async function saveToPantry(silent) {
+  if (!userNumber) return;
+  if (!silent) setSyncStatus("saving");
+  try {
+    const res = await fetch(pantryUrl(userNumber), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state)
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    setSyncStatus("synced");
+  } catch (e) {
+    setSyncStatus("error", "保存失敗");
+    console.error(e);
+  }
+}
+
+// ===== ユーザー番号管理 =====
+const registerScreen = document.getElementById("registerScreen");
+const introScreen = document.getElementById("introScreen");
+const userNumberDisplay = document.getElementById("userNumberDisplay");
+const newNumberDisplay = document.getElementById("newNumberDisplay");
+const enterError = document.getElementById("enterError");
+
+function generateNumber() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function showStep(n) {
+  ["regStep1","regStep2","regStep3"].forEach((id,i) => {
+    document.getElementById(id).hidden = (i+1 !== n);
+  });
+  enterError.textContent = "";
+}
+
+function showRegister() {
+  registerScreen.classList.remove("hidden", "fading");
+  introScreen.classList.add("hidden");
+  showStep(1);
+}
+
+async function applyUserNumber(num, isNew) {
+  userNumber = num;
+  localStorage.setItem(USER_KEY, num);
+  userNumberDisplay.textContent = num;
+  // ローカルキャッシュをクリア（別の番号からの切替対策）
+  state = emptyState();
+  saveLocal();
+  render();
+  // Pantry から取得（無ければ作成）
+  await loadFromPantry();
+  // 登録画面 → 冷蔵庫イントロへ
+  registerScreen.classList.add("fading");
+  setTimeout(() => {
+    registerScreen.classList.add("hidden");
+    introScreen.classList.remove("hidden", "fade-out", "opening");
+  }, 400);
+}
+
+document.getElementById("newNumberBtn").addEventListener("click", () => {
+  newNumberDisplay.textContent = generateNumber();
+  showStep(3);
+});
+document.getElementById("enterNumberBtn").addEventListener("click", () => {
+  showStep(2);
+  setTimeout(() => document.getElementById("userNumberInput").focus(), 50);
+});
+document.getElementById("backToStep1A").addEventListener("click", () => showStep(1));
+document.getElementById("backToStep1B").addEventListener("click", () => showStep(1));
+document.getElementById("regenBtn").addEventListener("click", () => {
+  newNumberDisplay.textContent = generateNumber();
+});
+
+document.getElementById("confirmNewBtn").addEventListener("click", () => {
+  applyUserNumber(newNumberDisplay.textContent, true);
+});
+
+const userNumberInput = document.getElementById("userNumberInput");
+userNumberInput.addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/[^0-9]/g, "");
+  userNumberInput.classList.remove("error");
+  enterError.textContent = "";
+});
+document.getElementById("submitNumberBtn").addEventListener("click", trySubmitNumber);
+userNumberInput.addEventListener("keydown", (e) => { if (e.key === "Enter") trySubmitNumber(); });
+
+function trySubmitNumber() {
+  const v = userNumberInput.value.trim();
+  if (!/^[0-9]{6}$/.test(v)) {
+    userNumberInput.classList.add("error");
+    enterError.textContent = "6桁の数字を入力してください";
+    return;
+  }
+  applyUserNumber(v, false);
+}
+
+document.getElementById("switchUserBtn").addEventListener("click", () => {
+  if (!confirm("番号を切り替えますか？\n（現在のリストはPantryに残っていますので、後で同じ番号を入力すれば戻せます）")) return;
+  userNumber = null;
+  localStorage.removeItem(USER_KEY);
+  state = emptyState();
+  saveLocal();
+  render();
+  showRegister();
+});
+
+document.getElementById("refreshBtn").addEventListener("click", async () => {
+  await loadFromPantry();
+});
 
 // ===== レンダリング =====
 const SHELF_CONTAINERS = {
@@ -741,14 +1013,16 @@ function renderCategory(category, container, q) {
           if (!it.builtin) {
             state.custom[category] = state.custom[category].filter(n => n !== it.name);
             delete state.have[k];
-            saveState();
+            saveLocal();
+            scheduleSave();
             render();
           }
           return;
         }
         state.have[k] = !state.have[k];
         if (!state.have[k]) delete state.have[k];
-        saveState();
+        saveLocal();
+        scheduleSave();
         render();
       });
       itemsEl.appendChild(el);
@@ -810,7 +1084,6 @@ document.querySelectorAll(".chip").forEach(btn => {
   });
 });
 
-// 共通追加フォーム
 const customCategory = document.getElementById("customCategory");
 const customName = document.getElementById("customName");
 function doCustomAdd() {
@@ -827,18 +1100,19 @@ function doCustomAdd() {
   }
   state.custom[category].push(name);
   state.have[keyOf(category, name)] = true;
-  saveState();
+  saveLocal();
+  scheduleSave();
   customName.value = "";
   render();
 }
 document.getElementById("customAddBtn").addEventListener("click", doCustomAdd);
 customName.addEventListener("keydown", (e) => { if (e.key === "Enter") doCustomAdd(); });
 
-// リセット・エクスポート・インポート
 document.getElementById("resetBtn").addEventListener("click", () => {
-  if (confirm("チェック状態と自由追記を全てリセットしますか？")) {
-    state = { have: {}, custom: { liquid: [], powder: [], other: [] } };
-    saveState();
+  if (confirm("チェック状態と自由追記を全てリセットしますか？（共有先にも反映されます）")) {
+    state = emptyState();
+    saveLocal();
+    scheduleSave();
     render();
   }
 });
@@ -864,23 +1138,18 @@ document.getElementById("importFile").addEventListener("change", (e) => {
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const data = JSON.parse(reader.result);
-      if (data && data.have && data.custom) {
-        data.custom.liquid = data.custom.liquid || [];
-        data.custom.powder = data.custom.powder || [];
-        data.custom.other  = data.custom.other  || [];
-        state = data;
-        saveState();
-        render();
-      } else { alert("不正なファイル形式です"); }
+      const data = normalizeState(JSON.parse(reader.result));
+      state = data;
+      saveLocal();
+      scheduleSave();
+      render();
     } catch { alert("読み込みに失敗しました"); }
   };
   reader.readAsText(file);
   e.target.value = "";
 });
 
-// ===== 冷蔵庫オープン演出 =====
-const introScreen = document.getElementById("introScreen");
+// ===== 冷蔵庫オープン =====
 document.getElementById("openFridgeBtn").addEventListener("click", () => {
   introScreen.classList.add("opening");
   setTimeout(() => {
@@ -892,7 +1161,27 @@ document.getElementById("reopenBtn").addEventListener("click", () => {
   introScreen.classList.remove("hidden", "fade-out", "opening");
 });
 
-render();
+// ===== ページを再表示したら最新を取得 =====
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && userNumber) loadFromPantry();
+});
+
+// ===== 初期化 =====
+(async function init() {
+  state = loadLocal();
+  userNumber = localStorage.getItem(USER_KEY);
+  if (userNumber) {
+    userNumberDisplay.textContent = userNumber;
+    render();
+    // 登録画面を非表示、イントロを表示
+    registerScreen.classList.add("hidden");
+    introScreen.classList.remove("hidden");
+    await loadFromPantry();
+  } else {
+    showRegister();
+    render();
+  }
+})();
 </script>
 </body>
 </html>
