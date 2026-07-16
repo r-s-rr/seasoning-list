@@ -865,7 +865,7 @@ function showRegister() {
   showStep(1);
 }
 
-async function applyUserNumber(num, isNew) {
+function applyUserNumber(num, isNew) {
   userNumber = num;
   localStorage.setItem(USER_KEY, num);
   userNumberDisplay.textContent = num;
@@ -873,14 +873,15 @@ async function applyUserNumber(num, isNew) {
   state = emptyState();
   saveLocal();
   render();
-  // Pantry から取得（無ければ作成）
-  await loadFromPantry();
-  // 登録画面 → 冷蔵庫イントロへ
+  // 登録画面 → 冷蔵庫イントロへ（ネットワークを待たず即座に遷移）
   registerScreen.classList.add("fading");
   setTimeout(() => {
     registerScreen.classList.add("hidden");
     introScreen.classList.remove("hidden", "fade-out", "opening");
   }, 400);
+  // Pantry からの取得（無ければ作成）はバックグラウンドで実行し、
+  // 完了後に render() で反映する。ボタンの反応を待たせない。
+  loadFromPantry();
 }
 
 document.getElementById("newNumberBtn").addEventListener("click", () => {
