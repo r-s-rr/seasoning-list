@@ -768,6 +768,11 @@ function normalizeState(s) {
   return s;
 }
 
+function isEmptyState(s) {
+  return Object.keys(s.have).length === 0 &&
+    s.custom.liquid.length + s.custom.powder.length + s.custom.other.length === 0;
+}
+
 function loadLocal() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -797,8 +802,14 @@ async function loadFromPantry() {
   try {
     const res = await fetch(pantryUrl(userNumber));
     if (res.ok) {
-      const data = await res.json();
-      state = normalizeState(data);
+      const remote = normalizeState(await res.json());
+      if (isEmptyState(remote) && !isEmptyState(state)) {
+        // クラウドが空でこの端末にデータがある（保存先の作り直し直後など）
+        // → 空で上書きせず、この端末のデータをアップロードする
+        saveToPantry(true);  // 待たない（保存中も編集を受け付ける）
+        return;
+      }
+      state = remote;
       saveLocal();
       render();
       setSyncStatus("synced");
@@ -811,7 +822,7 @@ async function loadFromPantry() {
         return;
       }
       // 未作成 → 現在の(ローカル)状態でバスケット作成
-      await saveToPantry(true);
+      saveToPantry(true);  // 待たない（保存中も編集を受け付ける）
     } else {
       setSyncStatus("error", "読込失敗 " + res.status);
     }
@@ -831,20 +842,35 @@ function scheduleSave() {
   saveTimer = setTimeout(() => saveToPantry(false), 700);
 }
 
-async function saveToPantry(silent) {
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Pantry は連続アクセスすると 429 を返し、その応答には CORS ヘッダーが無いため
+// fetch 自体が失敗する。読み込み直後の保存は少し待ち、失敗したら間隔を空けて再試行する。
+async function saveToPantry(afterLoad) {
   if (!userNumber) return;
-  if (!silent) setSyncStatus("saving");
-  try {
-    const res = await fetch(pantryUrl(userNumber), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(state)
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    setSyncStatus("synced");
-  } catch (e) {
-    setSyncStatus("error", "保存失敗");
-    console.error(e);
+  const num = userNumber;
+  setSyncStatus("saving");
+  if (afterLoad) await sleep(1500);
+  const retryDelays = [3000, 6000, 12000];
+  for (let attempt = 0; ; attempt++) {
+    if (userNumber !== num) return;  // 途中で番号が切り替わった
+    try {
+      const res = await fetch(pantryUrl(num), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state)
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      setSyncStatus("synced");
+      return;
+    } catch (e) {
+      console.error(e);
+      if (attempt >= retryDelays.length) {
+        setSyncStatus("error", "保存失敗");
+        return;
+      }
+      await sleep(retryDelays[attempt]);
+    }
   }
 }
 
