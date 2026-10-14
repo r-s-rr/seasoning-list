@@ -652,7 +652,7 @@
 
 <script>
 // ===== Pantry Cloud 設定 =====
-const PANTRY_ID = '3c4e1c3d-5641-4516-8ee6-1ea2d9df992f';
+const PANTRY_ID = '187d3bbd-56d0-4a01-9952-cc40dda42bc2';
 const pantryUrl = (num) => `https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/user-${num}`;
 
 const USER_KEY = 'seasoning-user-number';
@@ -803,6 +803,13 @@ async function loadFromPantry() {
       render();
       setSyncStatus("synced");
     } else if (res.status === 400 || res.status === 404) {
+      const body = await res.text();
+      if (body.includes("Could not get pantry")) {
+        // pantry 自体が消えている（PANTRY_ID の差し替えが必要）
+        setSyncStatus("error", "保存先(Pantry)が見つかりません");
+        console.error("Pantry not found:", body);
+        return;
+      }
       // 未作成 → 現在の(ローカル)状態でバスケット作成
       await saveToPantry(true);
     } else {
